@@ -3,6 +3,12 @@ require "rails_helper"
 # rubocop:disable RSpec/ExampleLength
 RSpec.describe Settings::RegistryMirrorsController, type: :controller do
   let(:user) { create(:user) }
+  let(:admin_cert_text) { file_fixture("admin.crt").read.strip }
+  let(:pem_cert) { create(:certificate) }
+  let(:pem_cert_text) { pem_cert.certificate.strip }
+  let(:pem_cert_file) do
+    fixture_file_upload(to_fixture_file(pem_cert.certificate), "application/x-x509-user-cert")
+  end
 
   before do
     setup_done
@@ -80,7 +86,7 @@ RSpec.describe Settings::RegistryMirrorsController, type: :controller do
         registry_mirror_params = {
           name:        "r1",
           url:         "http://local.lan",
-          certificate: "cert",
+          certificate: pem_cert_file,
           registry_id: registry.id
         }
 
@@ -103,21 +109,21 @@ RSpec.describe Settings::RegistryMirrorsController, type: :controller do
         registry_mirror_params = {
           name:        "r1",
           url:         "http://local.lan",
-          certificate: "cert",
+          certificate: pem_cert_file,
           registry_id: registry.id
         }
 
         post :create, registry_mirror: registry_mirror_params
         registry_mirror = RegistryMirror.find_by(name: "r1")
         expect(registry_mirror.name).to eq("r1")
-        expect(registry_mirror.certificate.certificate).to eq("cert")
+        expect(registry_mirror.certificate.certificate).to eq(pem_cert_text)
       end
 
       it "does not save in db and return unprocessable entity status when invalid" do
         registry_mirror_params = {
           name:        "r1",
           url:         "invalid",
-          certificate: "cert",
+          certificate: pem_cert_file,
           registry_id: registry.id
         }
 
@@ -148,22 +154,22 @@ RSpec.describe Settings::RegistryMirrorsController, type: :controller do
       registry_mirror_params = {
         name:        registry_mirror.name,
         url:         registry_mirror.url,
-        certificate: "C2"
+        certificate: pem_cert_file
       }
 
       put :update, id: registry_mirror.id, registry_mirror: registry_mirror_params
-      expect(registry_mirror.certificate.certificate).to eq("C2")
+      expect(RegistryMirror.find(registry_mirror.id).certificate.certificate).to eq(pem_cert_text)
     end
 
     it "updates a certificate" do
       registry_mirror_params = {
         name:        registry_mirror_with_cert.name,
         url:         registry_mirror_with_cert.url,
-        certificate: "C4"
+        certificate: pem_cert_file
       }
 
       put :update, id: registry_mirror_with_cert.id, registry_mirror: registry_mirror_params
-      expect(registry_mirror_with_cert.reload.certificate.certificate).to eq("C4")
+      expect(registry_mirror_with_cert.reload.certificate.certificate) .to eq(pem_cert_text)
     end
 
     it "drops a certificate" do

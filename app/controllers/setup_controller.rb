@@ -155,7 +155,9 @@ class SetupController < ApplicationController
 
   # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
   def settings_params
-    settings = params.require(:settings).permit(*Pillar.all_pillars.keys)
+    settings = params.require(:settings)
+                     .permit(*Pillar.all_pillars.keys,
+                             system_certificate: [:name, :certificate, :current_cert])
 
     if params["settings"]["enable_proxy"] == "disable"
       settings["proxy_systemwide"] = "false"

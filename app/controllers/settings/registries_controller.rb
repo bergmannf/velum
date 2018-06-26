@@ -52,23 +52,14 @@ class Settings::RegistriesController < SettingsController
     render action: :edit, status: :unprocessable_entity
   end
 
-  def destroy
-    @registry.destroy
-    redirect_to settings_registries_path, notice: "Registry was successfully removed."
+  def certificate_holder_update_params
+    registry_params.except(:certificate, :current_cert)
   end
 
   private
 
-  def set_registry
-    @registry = Registry.find(params[:id])
-  end
-
-  def certificate_param
-    registry_params[:certificate].strip if registry_params[:certificate].present?
-  end
-
   def registry_params
-    params.require(:registry).permit(:name, :url, :certificate)
+    params.require(:registry).permit(:name, :url, :certificate, :current_cert)
   end
 
   def suse_registry?(registry)

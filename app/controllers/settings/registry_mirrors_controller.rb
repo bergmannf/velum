@@ -14,14 +14,16 @@ class Settings::RegistryMirrorsController < SettingsController
 
   def create
     @registry = Registry.find(registry_mirror_params[:registry_id])
-    registry_mirror_create_params = registry_mirror_params.except(:certificate, :registry_id)
-    @registry_mirror = @registry.registry_mirrors.build(registry_mirror_create_params)
-    @cert = Certificate.find_or_initialize_by(certificate: certificate_param)
+    registry_mirror_create_params = registry_mirror_params.except(:certificate,
+                                                                  :current_cert,
+                                                                  :registry_id)
+    @certificate_holder = @registry.registry_mirrors.build(registry_mirror_create_params)
+    @cert = passed_certificate
 
     ActiveRecord::Base.transaction do
       @registry_mirror.save!
 
-      create_or_update_certificate! if certificate_param.present?
+      create_or_update_certificate! if passed_certificate.present?
 
       @created = true
     end
@@ -54,23 +56,22 @@ class Settings::RegistryMirrorsController < SettingsController
     render action: :edit, status: :unprocessable_entity
   end
 
-  def destroy
-    @registry_mirror.destroy
-    redirect_to settings_registry_mirrors_path, notice: "Mirror was successfully removed."
+  def certificate_holder_params
+    registry_mirror_params
+  end
+
+  def certificate_holder_update_params
+    registry_mirror_params.except(:certificate, :current_cert, :registry_id)
   end
 
   private
 
-  def set_registry_mirror
-    @registry_mirror = RegistryMirror.find(params[:id])
-  end
-
-  def certificate_param
-    registry_mirror_params[:certificate].strip if registry_mirror_params[:certificate].present?
-  end
-
   def registry_mirror_params
-    params.require(:registry_mirror).permit(:name, :url, :certificate, :registry_id)
+    params.require(:registry_mirror).permit(:name,
+                                            :url,
+                                            :certificate,
+                                            :registry_id,
+                                            :current_cert)
   end
 
   def create_or_update_certificate!

@@ -14,6 +14,11 @@ RSpec.describe SetupController, type: :controller do
       enable_proxy: "disable"
     }
   end
+  let(:pem_cert) { create(:certificate) }
+  let(:pem_cert_text) { pem_cert.certificate.strip }
+  let(:pem_cert_file) do
+    fixture_file_upload(to_fixture_file(pem_cert.certificate), "application/x-x509-user-cert")
+  end
 
   before do
     setup_stubbed_pending_minions!
@@ -62,6 +67,25 @@ RSpec.describe SetupController, type: :controller do
 
       it "assigns @no_proxy" do
         expect(assigns(:no_proxy)).to eq("localhost")
+      end
+    end
+
+    context "when a certificate was previously configured" do
+      let(:certificate_settings) do
+        settings_params.dup.tap do |s|
+          s["system_certificate"] = { name:        "sca1",
+                                      certificate: pem_cert_file }
+        end
+      end
+
+      before do
+        sign_in user
+        put :configure, settings: certificate_settings
+        get :welcome
+      end
+
+      it "remembers the created certificate" do
+        expect(assigns(:system_certificate)).to eq(SystemCertificate.find_by(name: "sca1"))
       end
     end
 
@@ -659,6 +683,44 @@ RSpec.describe SetupController, type: :controller do
       it "erases fields left by the user" do
         expect(Pillar.value(pillar: :cloud_provider)).to be_nil
         expect(Pillar.value(pillar: :cloud_openstack_domain)).to be_nil
+      end
+    end
+
+    context "when user enters a certificate" do
+      let(:certificate_settings) do
+        settings_params.dup.tap do |s|
+          s["system_certificate"] = { name:        "sca1",
+                                      certificate: pem_cert_file }
+        end
+      end
+
+      before do
+        sign_in user
+      end
+
+      it "creates a new system certificate" do
+        put :configure, settings: certificate_settings
+        system_certificate = SystemCertificate.find_by(name: "sca1")
+        expect(system_certificate.name).to eq("sca1")
+        expect(system_certificate.certificate.certificate).to eq(pem_cert_text)
+      end
+    end
+
+    context "when user enters an invalid certificate" do
+      let(:certificate_settings) do
+        settings_params.dup.tap do |s|
+          s["system_certificate"] = { name:        "",
+                                      certificate: pem_cert_file }
+        end
+      end
+
+      before do
+        sign_in user
+      end
+
+      it "redirects to the setup page" do
+        response = put :configure, settings: certificate_settings
+        expect(response).to redirect_to(setup_path)
       end
     end
   end
