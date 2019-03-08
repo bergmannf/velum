@@ -87,6 +87,7 @@ sed -e "s/__VERSION__/$version/g" -i ${packagename}.spec
 sed -e "s/__CURRENT_YEAR__/$year/g" -i ${packagename}.spec
 sed -e "s/__PATCHSOURCES__/$patchsources/g" -i ${packagename}.spec
 sed -e "s/__PATCHEXECS__/$patchexecs/g" -i ${packagename}.spec
+sed -e "s/__PACKAGENAME__/$packagename/g" -i ${packagename}.spec
 
 if [ -f ${packagename}.spec ];then
   echo "Done!"

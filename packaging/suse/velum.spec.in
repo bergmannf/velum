@@ -15,20 +15,21 @@
 # Please submit bugfixes or comments via http://bugs.opensuse.org/
 #
 
-Name:           velum
+%define packagename __PACKAGENAME__
+%define branch __BRANCH__
 
 # When you release a new version, set Version and branch accordingly.
 # For example:
 # Version:      1.0.0
 # %%define branch 1.0.0
 
+Name:           velum
 Version:        __VERSION__
-%define branch __BRANCH__
 Release:        0.0.1
 License:        Apache-2.0
 Summary:        Dashboard for CaasP
 Url:            https://github.com/kubic-project/velum
-Source:         %{branch}.tar.gz
+Source:         %{packagename}-%{branch}.tar.gz
 Source2:        velum-rpmlintrc
 __PATCHSOURCES__
 
@@ -77,7 +78,7 @@ velum is the dashboard for CaasP to manage and deploy kubernetes clusters on top
 This package has been built with commit __COMMIT__ from branch __BRANCH__ on date __DATE__
 
 %prep
-%setup -q -n velum-%{branch}
+%setup -q -n %{packagename}-%{branch}
 %rails_save_gemfile
 __PATCHEXECS__
 
