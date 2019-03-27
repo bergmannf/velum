@@ -12,11 +12,7 @@ class Settings::LdapTestController < ApplicationController
   end
 
   def build_tls_options(pem_string)
-    pem_string = pem_string.sub! "-----BEGIN CERTIFICATE-----", ""
-    pem_string = pem_string.sub! "-----END CERTIFICATE-----", ""
-    pem_string = pem_string.delete("\n")
-    decoded_pem = Base64.strict_decode64(pem_string)
-    cert = OpenSSL::X509::Certificate.new(decoded_pem)
+    cert = OpenSSL::X509::Certificate.new(pem_string)
     cert_store = OpenSSL::X509::Store.new
     cert_store.add_cert(cert)
     {
